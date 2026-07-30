@@ -1,5 +1,7 @@
 # 🚀 AI Apps Are Incredibly Competitive. Why Am I Still Building Xworkmate During My Gap Year?
 
+![Cartoon IT Guy Coding with AI in Cafe](/assets/images/cartoon_it_coffee.jpg)
+
 After reading the leaked transcript of the conversation with Liang Wenfeng, I became even more convinced of one thing: **The path of AI cannot be judged solely by whether it makes money right now.**
 
 ## Why Keep Building AI Apps?

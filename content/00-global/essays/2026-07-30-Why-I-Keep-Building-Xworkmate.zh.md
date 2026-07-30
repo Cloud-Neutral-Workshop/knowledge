@@ -1,5 +1,7 @@
 # 🚀 AI App 都卷成这样了，我为什么还要在 GAP 期继续做 Xworkmate？
 
+![Cartoon IT Guy Coding with AI in Cafe](/assets/images/cartoon_it_coffee.jpg)
+
 读完那份流传出来的梁文锋交流文字稿，我反而更坚定了一件事：**AI 这条路，不能只用“现在赚不赚钱”来判断。**
 
 ## 为什么要继续做 AI App？
