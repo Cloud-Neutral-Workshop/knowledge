@@ -1,5 +1,7 @@
 # 🚀 从单机到多云：Zero-Trust GitOps & AI 重塑多环境交付
 
+![Multi-Cloud Delivery](/assets/images/multi-cloud-delivery.png)
+
 随着现代应用在多云架构中的规模不断扩大，如何高效且安全地管理**多环境（UAT、Prod 等）**的发布流程成为了一个巨大挑战。在近期的工程重构中，我们依托 GitHub Actions 构建了一套高度自动化、强安全约束的体系。
 
 本文将结合我们仓库中 `.github/workflows` 目录下最具代表性的 4 个核心流水线，深度剖析如何利用 **Docker + GitOps + HashiCorp Vault** 打造丝滑流畅的多云交付体验。
@@ -42,8 +44,6 @@
 > **场景痛点**：如何灵活控制跨云提供商的基础设施调度、DNS 流量切换以及多组件的一致性拉起？
 
 这是我们架构的主入口和总线，它是一个高度模块化和参数化的编排器。
-
-![GitHub Actions - platform-ops 拓扑图](/assets/images/platform-ops-topology.png)
 
 - **机制**：它不负责具体的业务编译，而是通过严密串联多个环境拓扑的部署动作来执行“运维级任务”。比如，它通过分析上游的构建产物或 GitOps Tag 的更新，触发远程主机环境探针拉起（Deploy Monitor Agent）、执行数据迁移脚本（Database Init）、以及精准操控 DNS 流量权重（Switch DNS）。
 - **安全拦截**：在此流程中引入了严苛的 **Gating (门禁)** 机制。通过定制的校验脚本，严禁在 `run:` 中写入未经审计的内联 Shell 代码，所有逻辑必须封装在仓库跟踪的安全脚本内，防止供应链投毒。
