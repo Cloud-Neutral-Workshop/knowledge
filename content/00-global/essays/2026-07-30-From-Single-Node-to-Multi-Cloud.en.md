@@ -1,5 +1,7 @@
 # 🚀 From Single-Node to Multi-Cloud: Reimagining Multi-Environment Delivery with Zero-Trust GitOps & AI
 
+![Multi-Cloud Delivery](/assets/images/multi-cloud-delivery.png)
+
 As modern applications scale across multi-cloud architectures, managing secure and efficient deployments across multiple environments (UAT, Prod, etc.) becomes a massive challenge. Recently, our engineering team completely revamped our infrastructure delivery pipeline using **GitHub Actions**, **Docker**, **GitOps**, and **HashiCorp Vault**. 
 
 Here’s a deep dive into the 4 core workflows that transformed our deployment lifecycle from fragile manual operations into a seamless, automated symphony. 🎵
@@ -42,8 +44,6 @@ This is where HashiCorp Vault truly shines in our architecture. We automated the
 > **The Problem**: How do you orchestrate cross-cloud infrastructure provisioning, DNS traffic shifting, and component bootstrapping in sync?
 
 This workflow acts as the master orchestrator and central bus of our delivery chain. 
-
-![GitHub Actions - platform-ops Topology](/assets/images/platform-ops-topology.png)
 
 - **How it works**: It doesn't compile business code. Instead, it chains infrastructure operations: analyzing upstream GitOps tags, bootstrapping observability agents, triggering database migrations, and executing weighted DNS traffic switches for Blue-Green deployments.
 - **Security Gating**: We introduced rigorous CI gating. Custom verification scripts strictly prohibit un-audited inline shell scripts within the `run:` blocks to prevent supply chain poisoning.
