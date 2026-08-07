@@ -76,6 +76,8 @@ Through the MCP protocol, AI LLM Agents can execute structured Tool Calls:
 * **Metric Tool Call**: AI prompts: *"Show memory and bandwidth usage trends for host agent-proxy over the last 1 hour"* $\rightarrow$ VictoriaMetrics MCP generates MetricsQL $\rightarrow$ returns structured time-series data.
 * **Log Tool Call**: AI prompts: *"Retrieve 5xx error logs for Caddy around 13:45"* $\rightarrow$ VictoriaLogs MCP executes LogsQL $\rightarrow$ extracts matching log context.
 
+![Observability Server Architecture Graphic](/assets/images/observability_server_architecture.jpg)
+
 ---
 
 ## 3. Server Topology & Data Flow
