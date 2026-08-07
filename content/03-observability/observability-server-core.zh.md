@@ -76,6 +76,8 @@ observability_victoriatraces_mcp_port: 4320
 * **Metric Tool Call**: AI 提出 `"查一下 agent-proxy 主机过去 1 小时的内存与带宽使用趋势"` $\rightarrow$ VictoriaMetrics MCP 解析生成 MetricsQL $\rightarrow$ 返回结构化时序数据。
 * **Log Tool Call**: AI 提出 `"检索 13:45 左右 Caddy 的 5xx 错误日志"` $\rightarrow$ VictoriaLogs MCP 执行 LogsQL $\rightarrow$ 提取匹配日志上下文。
 
+![Observability Server Architecture Graphic](/assets/images/observability_server_architecture.jpg)
+
 ---
 
 ## 3. 服务端整体架构与数据流 (Server Topology)
