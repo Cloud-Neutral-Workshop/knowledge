@@ -179,7 +179,7 @@ observability.svc.plus {
 
 ---
 
-## 5. 故障排查实战：AI Agent 4-MCP 管道联动秒级定位根因
+## 5. 故障排查实战：AI Agent 4-MCP 管道联动分钟级定位根因
 
 ### 5.1 故障现场：07:30 突发风暴告警
 监控系统连续弹出告警，目标节点为 `console-uat.onwalk.net`（UAT 环境核心控制台）：
