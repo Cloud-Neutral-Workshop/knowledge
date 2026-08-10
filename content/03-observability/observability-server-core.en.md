@@ -181,7 +181,7 @@ observability.svc.plus {
 
 ---
 
-## 5. Real-World Incident Post-Mortem: 4-MCP Pipeline Instant Diagnosis
+## 5. Real-World Incident Post-Mortem: 4-MCP Pipeline Minute-Level Diagnosis
 
 ### 5.1 Incident Site: The 07:30 Storm
 At approximately 07:30:00, automated monitoring fired critical alerts on host `console-uat.onwalk.net` (UAT Environment Core Console Node):
