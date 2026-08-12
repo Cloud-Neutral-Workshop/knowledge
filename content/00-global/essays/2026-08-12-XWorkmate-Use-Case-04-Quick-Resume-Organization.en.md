@@ -1,4 +1,16 @@
-# XWorkmate / AI-Workspace Use Case 04: Quick Resume Organization & Tailoring
+---
+title: "XWorkmate / AI-Workspace Use Case 04: Quick Resume Organization & Tailoring"
+description: "In 3 minutes, let AI reorganize your experiences for maximum job alignment."
+date: 2026-08-12T00:00:00Z
+author: shenlan
+lang: en
+category: essays
+tags:
+  - xworkmate
+  - ai-workspace
+  - resume-optimizer
+---
+
 
 > **Author**: Haitao Pan (Xingzhe Shenlan) | **Date**: July 23, 2026
 

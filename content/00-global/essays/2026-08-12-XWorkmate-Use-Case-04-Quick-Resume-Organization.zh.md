@@ -1,4 +1,16 @@
-# XWorkmate / AI-Workspace 使用案例-04：快速整理个人简历
+---
+title: "XWorkmate / AI-Workspace 使用案例-04：快速整理个人简历"
+description: "3 分钟，让 AI 帮你把经历重新组织一遍。"
+date: 2026-08-12T00:00:00Z
+author: shenlan
+lang: zh
+category: essays
+tags:
+  - xworkmate
+  - ai-workspace
+  - resume-optimizer
+---
+
 
 > **作者**：潘海涛 (行者深蓝) | **发布时间**：2026年7月23日
 
