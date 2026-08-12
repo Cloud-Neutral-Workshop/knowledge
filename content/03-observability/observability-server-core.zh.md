@@ -127,6 +127,77 @@ observability_victorialogs_mcp_port: 9430
 observability_victoriatraces_mcp_enabled: "{{ observability_mcp_enabled }}"
 observability_victoriatraces_mcp_port: 4320
 
+---
+
+## 4. 服务端整体架构与数据流（Server Topology）
+
+![Observability Cheatsheet Topology](/assets/images/observability_cheatsheet_topology.png)
+
+<details>
+<summary>点击展开 Mermaid 架构源码 (Mermaid Source Code)</summary>
+
+```mermaid
+flowchart LR
+    classDef agentStyle fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20;
+    classDef serverStyle fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#4a148c;
+    classDef mcpStyle fill:#fff8e1,stroke:#f57f17,stroke-width:2px,color:#e65100;
+    classDef aiStyle fill:#e8eaf6,stroke:#283593,stroke-width:2px,color:#1a237e;
+
+    subgraph STEP1 ["1️⃣ Observability Agent (边缘采集)"]
+        EX_NODE["Node & Process Exporters"]:::agentStyle
+        EX_XRAY["Xray Traffic Exporter"]:::agentStyle
+        V_PIPE["Vector Pipeline<br>(VRL Remap + Disk Buffer)"]:::agentStyle
+        EX_NODE --> V_PIPE
+        EX_XRAY --> V_PIPE
+    end
+
+    subgraph STEP2 ["2️⃣ Observability Server (服务端中枢)"]
+        CADDY["Caddy Gateway<br>(observability.svc.plus)"]:::serverStyle
+        VM["VictoriaMetrics (:8428)<br>Metrics Storage"]:::serverStyle
+        VL["VictoriaLogs (:9428)<br>Logs Engine"]:::serverStyle
+        VT["VictoriaTraces (:4318)<br>OTLP Traces"]:::serverStyle
+        GRAFANA["Grafana Dashboards<br>& Alert Manager"]:::serverStyle
+        
+        CADDY -->|/ingest/metrics| VM
+        CADDY -->|/ingest/logs| VL
+        CADDY -->|/ingest/traces| VT
+        VM --> GRAFANA
+        VL --> GRAFANA
+        VT --> GRAFANA
+    end
+
+    subgraph STEP3 ["3️⃣ MCP & AI Gateway (智能化接入层)"]
+        MCP_VM["VictoriaMetrics MCP (:8430)"]:::mcpStyle
+        MCP_VL["VictoriaLogs MCP (:9430)"]:::mcpStyle
+        MCP_VT["VictoriaTraces MCP (:4320)"]:::mcpStyle
+        MCP_GF["Grafana MCP (:3001)"]:::mcpStyle
+        
+        VM <--> MCP_VM
+        VL <--> MCP_VL
+        VT <--> MCP_VT
+        GRAFANA <--> MCP_GF
+    end
+
+    subgraph STEP4 ["4️⃣ AI Agent 智能排障与上下文感知工作流"]
+        AI_ASSISTANT["AI Agent (Cursor / Claude / Antigravity)<br>• MetricsQL / LogsQL Tool Calls<br>• Trace Bottleneck Analysis<br>• Alert & Dashboard Inspection"]:::aiStyle
+    end
+
+    V_PIPE -->|Metrics / Logs / Traces| CADDY
+    MCP_VM <-->|JSON-RPC| AI_ASSISTANT
+    MCP_VL <-->|JSON-RPC| AI_ASSISTANT
+    MCP_VT <-->|JSON-RPC| AI_ASSISTANT
+    MCP_GF <-->|JSON-RPC| AI_ASSISTANT
+```
+
+</details>
+
+**数据流向与步骤**：
+
+1. **Observability Agent（边缘采集）**：通过 Node/Process/Xray Exporters 采集基础指标与系统日志，经由 Vector 管道（VRL Remap + 磁盘持久化缓冲）加密上报；
+2. **Observability Server（服务端中枢）**：Caddy 统一入口按 Path 分发，分别写入 VictoriaMetrics、VictoriaLogs 与 VictoriaTraces 存储引擎，由 Grafana 进行统一聚合可视化；
+3. **MCP & AI Gateway（智能化接入层）**：VictoriaMetrics MCP、VictoriaLogs MCP、VictoriaTraces MCP 与 Grafana MCP 四大适配器挂载于 `/mcp/v1/*` 路由；
+4. **AI Agent 智能排障与上下文感知工作流**：AI Coding Agent（Cursor / Claude / Antigravity）通过 JSON-RPC 发起 Tool Calls，自动完成指标分析、日志检索、Trace 瓶颈定位与告警自愈排障。
+
 # 2.4 Grafana MCP (提供 Dashboards 配置与 Alert 告警状态提取)
 observability_grafana_mcp_enabled: "{{ observability_mcp_enabled }}"
 observability_grafana_mcp_port: 3001
