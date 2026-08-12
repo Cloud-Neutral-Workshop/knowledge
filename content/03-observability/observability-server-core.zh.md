@@ -144,106 +144,66 @@ observability_victoriatraces_mcp_port: 4320
 <summary>点击展开 Mermaid 架构源码 (Mermaid Source Code)</summary>
 
 ```mermaid
-flowchart TD
+flowchart LR
     classDef agentStyle fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20;
-    classDef ingressStyle fill:#e0f7fa,stroke:#00838f,stroke-width:2px,color:#004d40;
     classDef serverStyle fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#4a148c;
     classDef mcpStyle fill:#fff8e1,stroke:#f57f17,stroke-width:2px,color:#e65100;
-    classDef uiStyle fill:#e8eaf6,stroke:#283593,stroke-width:2px,color:#1a237e;
+    classDef aiStyle fill:#e8eaf6,stroke:#283593,stroke-width:2px,color:#1a237e;
 
-    subgraph SECTION_AGENT ["🟢 Observability Agent 核心组件 (Edge Telemetry Agent)"]
-        subgraph AG_COLLECT ["1. 数据采集层 (Collectors & Tailers)"]
-            EX_NODE["Node Exporter (:9100)<br>• OS/CPU/RAM/Disk/Net"]:::agentStyle
-            EX_PROC["Process Exporter (:9256)<br>• Process-level CPU/FD/RAM"]:::agentStyle
-            EX_XRAY["Xray Exporter (:8080/8081)<br>• Inbound/Outbound Bandwidth"]:::agentStyle
-            EX_LOGS["System Log Tailer<br>• /var/log/syslog & auth.log"]:::agentStyle
-        end
-
-        subgraph AG_PIPELINE ["2. Vector Pipeline (v0.41.1 Engine)"]
-            V_REMAP["VRL Remap Transform<br>• Inject instance/job/env tags"]:::agentStyle
-            V_BUF_MEM["Memory Buffer<br>• Max 1000 events (Async)"]:::agentStyle
-            V_BUF_DISK["Disk Buffer<br>• Max 256 MiB Persistent"]:::agentStyle
-        end
-
-        subgraph AG_EGRESS ["3. 数据旁路分发 (Egress Sinks)"]
-            SINK_METRICS["Metrics Remote Write<br>• /ingest/metrics/api/v1/write"]:::agentStyle
-            SINK_LOGS["Logs Stream JSON Lines<br>• /ingest/logs/insert/jsonline"]:::agentStyle
-            SINK_BILLING["Billing Snapshot Fan-out<br>• HTTP POST + Bearer Token"]:::agentStyle
-        end
+    subgraph STEP1 ["1️⃣ Observability Agent (边缘采集)"]
+        EX_NODE["Node & Process Exporters"]:::agentStyle
+        EX_XRAY["Xray Traffic Exporter"]:::agentStyle
+        V_PIPE["Vector Pipeline<br>(VRL Remap + Disk Buffer)"]:::agentStyle
+        EX_NODE --> V_PIPE
+        EX_XRAY --> V_PIPE
     end
 
-    subgraph SECTION_SERVER ["🟣 Observability Server 核心组件 (Central Server Cluster)"]
-        subgraph GATEWAY ["1. 统一入口网关 (Caddy Ingress Gateway)"]
-            CADDY["Caddy Reverse Proxy (observability.svc.plus)<br>• TLS Termination & ACME Auto-Cert<br>• Path Router & IP/Token Access Control"]:::ingressStyle
-        end
-
-        subgraph ENGINES ["2. 核心存储与查询引擎 (Engine Array)"]
-            VM["VictoriaMetrics (:8428)<br>• 10x Compression<br>• MetricsQL / PromQL"]:::serverStyle
-            VL["VictoriaLogs (:9428)<br>• 80% RAM Reduction<br>• LogsQL Full-text Search"]:::serverStyle
-            VT["VictoriaTraces (:4317/4318)<br>• OpenTelemetry / OTLP<br>• Call-graph & Latency"]:::serverStyle
-        end
-
-        subgraph VISUAL ["3. 可视化与告警大盘 (Visualization)"]
-            GRAFANA["Grafana Dashboards (:3000)<br>• Metric-to-Log Correlations<br>• Alert Manager Rules"]:::uiStyle
-        end
-
-        subgraph MCP_ARRAY ["4. AI 模型上下文协议接入层 (MCP Server Array)"]
-            MCP_VM["VictoriaMetrics MCP (:8430)<br>• MetricsQL AI Query Tool"]:::mcpStyle
-            MCP_VL["VictoriaLogs MCP (:9430)<br>• LogsQL AI Log Search Tool"]:::mcpStyle
-            MCP_VT["VictoriaTraces MCP (:4320)<br>• OTLP Trace Context Tool"]:::mcpStyle
-            MCP_GF["Grafana MCP (:3001)<br>• Dashboards & Alert State Tool"]:::mcpStyle
-        end
+    subgraph STEP2 ["2️⃣ Observability Server (服务端中枢)"]
+        CADDY["Caddy Gateway<br>(observability.svc.plus)"]:::serverStyle
+        VM["VictoriaMetrics (:8428)<br>Metrics Storage"]:::serverStyle
+        VL["VictoriaLogs (:9428)<br>Logs Engine"]:::serverStyle
+        VT["VictoriaTraces (:4318)<br>OTLP Traces"]:::serverStyle
+        GRAFANA["Grafana Dashboards<br>& Alert Manager"]:::serverStyle
+        
+        CADDY -->|/ingest/metrics| VM
+        CADDY -->|/ingest/logs| VL
+        CADDY -->|/ingest/traces| VT
+        VM --> GRAFANA
+        VL --> GRAFANA
+        VT --> GRAFANA
     end
 
-    subgraph CONSUMERS ["👥 消费者与 AI Agent 层 (Telemetry Consumers)"]
-        SRE["SRE / DevOps 工程师<br>(Grafana HTTPS UI)"]:::uiStyle
-        AI_AGENT["AI Agent / LLM Coding Assistants<br>(Cursor / Claude / Antigravity via MCP JSON-RPC)"]:::mcpStyle
+    subgraph STEP3 ["3️⃣ MCP & AI Gateway (智能化接入层)"]
+        MCP_VM["VictoriaMetrics MCP (:8430)"]:::mcpStyle
+        MCP_VL["VictoriaLogs MCP (:9430)"]:::mcpStyle
+        MCP_VT["VictoriaTraces MCP (:4320)"]:::mcpStyle
+        MCP_GF["Grafana MCP (:3001)"]:::mcpStyle
+        
+        VM <--> MCP_VM
+        VL <--> MCP_VL
+        VT <--> MCP_VT
+        GRAFANA <--> MCP_GF
     end
 
-    %% Agent Flow
-    EX_NODE --> V_REMAP
-    EX_PROC --> V_REMAP
-    EX_XRAY --> V_REMAP
-    EX_LOGS --> V_REMAP
-    V_REMAP --> V_BUF_MEM
-    V_REMAP --> V_BUF_DISK
-    V_BUF_MEM --> SINK_METRICS
-    V_BUF_MEM --> SINK_LOGS
-    V_BUF_DISK --> SINK_BILLING
+    subgraph STEP4 ["4️⃣ AI Agent 智能排障与上下文感知工作流"]
+        AI_ASSISTANT["AI Agent (Cursor / Claude / Antigravity)<br>• MetricsQL / LogsQL Tool Calls<br>• Trace Bottleneck Analysis<br>• Alert & Dashboard Inspection"]:::aiStyle
+    end
 
-    %% Ingress Flow
-    SINK_METRICS -->|HTTPS| CADDY
-    SINK_LOGS -->|HTTPS| CADDY
-
-    %% Ingress to Engines
-    CADDY -->|/ingest/metrics/*| VM
-    CADDY -->|/ingest/logs/*| VL
-    CADDY -->|/ingest/traces/*| VT
-    CADDY -->|/mcp/v1/*| MCP_ARRAY
-
-    %% Engines to Visualization
-    VM -->|MetricsQL| GRAFANA
-    VL -->|LogsQL| GRAFANA
-    VT -->|OTLP Traces| GRAFANA
-
-    %% MCP to Engines
-    MCP_VM --> VM
-    MCP_VL --> VL
-    MCP_VT --> VT
-    MCP_GF --> GRAFANA
-
-    %% Consumers
-    GRAFANA --> SRE
-    AI_AGENT <-->|JSON-RPC /mcp/v1/*| CADDY
+    V_PIPE -->|Metrics / Logs / Traces| CADDY
+    MCP_VM <-->|JSON-RPC| AI_ASSISTANT
+    MCP_VL <-->|JSON-RPC| AI_ASSISTANT
+    MCP_VT <-->|JSON-RPC| AI_ASSISTANT
+    MCP_GF <-->|JSON-RPC| AI_ASSISTANT
 ```
 
 </details>
 
-**数据流要点**：
+**数据流向与步骤**：
 
-1. 边缘节点通过 Vector 采集指标（Metrics Remote Write）、日志（Logs JSON Lines）与分布式链路数据（OTLP Traces），统一上报至 Caddy 网关；
-2. Caddy 按 Path 前缀分发：`/ingest/metrics/*` → VictoriaMetrics，`/ingest/logs/*` → VictoriaLogs，`/ingest/traces/*` → VictoriaTraces；
-3. 可视化与告警由 Grafana 聚合三端数据源；AI Agent 则通过 `/mcp/v1/*` 与 MCP Server 阵列进行 JSON-RPC 双向交互。
+1. **Observability Agent（边缘采集）**：通过 Node/Process/Xray Exporters 采集基础指标与系统日志，经由 Vector 管道（VRL Remap + 磁盘持久化缓冲）加密上报；
+2. **Observability Server（服务端中枢）**：Caddy 统一入口按 Path 分发，分别写入 VictoriaMetrics、VictoriaLogs 与 VictoriaTraces 存储引擎，由 Grafana 进行统一聚合可视化；
+3. **MCP & AI Gateway（智能化接入层）**：VictoriaMetrics MCP、VictoriaLogs MCP、VictoriaTraces MCP 与 Grafana MCP 四大适配器挂载于 `/mcp/v1/*` 路由；
+4. **AI Agent 智能排障与上下文感知工作流**：AI Coding Agent（Cursor / Claude / Antigravity）通过 JSON-RPC 发起 Tool Calls，自动完成指标分析、日志检索、Trace 瓶颈定位与告警自愈排障。
 
 ---
 
