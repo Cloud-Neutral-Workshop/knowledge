@@ -1,0 +1,19 @@
+apiVersion: content.xworkmate.com/v1alpha1
+kind: WebsiteContent
+metadata:
+  name: portal
+spec:
+  schemaVersion: 1
+  locales:
+    - zh
+    - en
+  entrypoints:
+    homepageMarketing:
+      - homepage/zh/marketing.md
+      - homepage/en/marketing.md
+    homepageHero:
+      - homepage/zh/hero.md
+      - homepage/en/hero.md
+  consumer:
+    repository: portal
+    targetPath: src/content
