@@ -1,43 +1,53 @@
 ---
-title: Cloud-Neutral Toolkit Docs
-description: Structured entry for docs.svc.plus, with grouped navigation for onboarding, architecture, integrations, and reference.
+title: Cloud-Neutral Toolkit Documentation
+description: Comprehensive documentation for all Cloud-Neutral Toolkit services
 collection: index
 collectionLabel: Documentation Home
 ---
 
-# Cloud-Neutral Toolkit Docs
+# Cloud-Neutral Toolkit Documentation
 
-This `docs/` tree is the canonical source for **`docs.svc.plus`**.
+Welcome to the **Cloud-Neutral Toolkit** documentation. This comprehensive guide covers all services in the toolkit, helping you build, deploy, and manage cloud-native applications across any vendor.
 
-The documentation is organized around four stable navigation groups so the public docs experience can behave like a product manual rather than a raw file dump:
+## 🚀 Services
 
-- Get started
-- Foundations
-- Integrations
-- Reference
+### Console Service
 
-## Information Architecture
+The main dashboard and control plane for managing your cloud-neutral infrastructure.
 
-### Get started
+**[View Console Service Documentation →](/docs/01-console/index)**
 
-Entry pages for first-time readers: what this repository is, how `docs.svc.plus` consumes it, and which pages should be read first.
+### Accounts & Identity Service
 
-### Foundations
+Centralized authentication, authorization, and identity management with OIDC support.
 
-Core concepts for maintainers: information architecture, bilingual strategy, and publishing workflow.
+**[View Accounts & Identity Service Documentation →](/docs/02-accounts/index)**
 
-### Integrations
+### RAG Server (AI/ML)
 
-Operational links between `knowledge/docs` and downstream services, including `docs.svc.plus`, the sync pipeline, and legacy service documentation sets.
+Retrieval-Augmented Generation service for AI-powered features and intelligent assistance.
 
-### Reference
+**[View RAG Server (AI/ML) Documentation →](/docs/03-rag-server/index)**
 
-Schemas, coverage matrices, migration notes, and legacy-map pages that help keep the docs system maintainable.
+### PostgreSQL Service
 
-## Start Here
+Managed PostgreSQL database service with cloud-neutral deployment options.
 
-- [Get started overview](/docs/get-started/overview)
-- [Quickstart](/docs/get-started/quickstart)
-- [Foundations overview](/docs/core-concepts/overview)
-- [Integrations overview](/docs/integrations/overview)
-- [Reference overview](/docs/reference/overview)
+**[View PostgreSQL Service Documentation →](/docs/04-postgresql/index)**
+
+
+## 📚 Quick Links
+
+- **[Getting Started](/docs/01-console/index)** - Begin with the Console Service
+- **[Architecture Overview](/docs/01-console/architecture)** - Understand the system design
+- **[API Reference](/docs/02-accounts/api)** - Explore the APIs
+
+## 🔗 Resources
+
+- [GitHub Organization](https://github.com/cloud-neutral-toolkit)
+- [Community Forum](https://github.com/orgs/cloud-neutral-toolkit/discussions)
+- [Issue Tracker](https://github.com/cloud-neutral-toolkit/console.svc.plus/issues)
+
+---
+
+*Last updated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")*

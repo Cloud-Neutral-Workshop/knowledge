@@ -1,96 +1,42 @@
-# RAG Server
+# RAG Server Service Plus / RAG 后端服务
 
-The **XControl RAG Server** (`rag-server`) is a high-performance, modular backend designed to power Retrieval-Augmented Generation (RAG) applications. It functions as the core "Knowledge Engine" of the [console.svc.plus](https://svc.plus) platform.
+This `docs/` directory now has a bilingual canonical layer for the current repository state.
 
-## 🚀 Key Features
+本 `docs/` 目录现已补齐双语规范层，用于承接当前仓库状态下的核心文档。
 
-*   **Store & Retrieve**: Efficient vector storage and semantic search using **PostgreSQL + pgvector**.
-*   **Knowledge Sync**: Git-Ops style knowledge management. Sync content directly from Git repositories.
-*   **Model Agnostic**: Compatible with OpenAI API format (Chutes.ai, Ollama, etc.).
-*   **Cloud Native**: Designed for serverless deployment (Google Cloud Run).
-*   **Secure**: Integrated authentication middleware.
+## Quick Entry / 快速入口
 
-## 🛠 Tech Stack
+- Coverage checklist / 覆盖检查矩阵: `docs/DOC_COVERAGE.md`
+- English index / 英文入口: `docs/en/README.md`
+- 中文入口 / Chinese index: `docs/zh/README.md`
 
-- **Language**: Go 1.25+
-- **Web Framework**: Gin
-- **Database**: PostgreSQL 16 (pgvector extension required)
-- **Cache**: PostgreSQL (hstore + unlogged cache table)
-- **Authentication**: JWT / XControl Auth Service
+## Canonical Bilingual Pages / 双语规范页
 
-## 📦 Getting Started
+- `docs/en/architecture.md` / `docs/zh/architecture.md`
+- `docs/en/design.md` / `docs/zh/design.md`
+- `docs/en/deployment.md` / `docs/zh/deployment.md`
+- `docs/en/user-guide.md` / `docs/zh/user-guide.md`
+- `docs/en/developer-guide.md` / `docs/zh/developer-guide.md`
+- `docs/en/vibe-coding-reference.md` / `docs/zh/vibe-coding-reference.md`
 
-### Prerequisites
+## Current Repo Context / 当前仓库背景
 
-- **Go** 1.24 or higher
-- **PostgreSQL** with `vector`, `pg_jieba`, and `hstore` extensions enabled.
+- Root README: `rag-server.svc.plus`
+- Previous docs index: `RAG Server Documentation`
+- Manifest evidence / 构建清单: go.mod (`rag-server`)
+- Active code and ops directories / 当前主要目录: `cmd/`, `internal/`, `api/`, `deploy/`, `ansible/`, `scripts/`, `tests/`, `example/`, `migrations/`, `sql/`
 
-### Local Development
+## Existing Docs To Reconcile / 需要继续归并的现有文档
 
-1.  **Clone and Init**:
-    ```bash
-    make init
-    ```
-
-2.  **Database Setup**:
-    Ensure you have a Postgres instance running. Then initialize the schema:
-    ```bash
-    # Update Makefile DB credentials if necessary or set via env vars
-    make init-db
-    ```
-
-3.  **Run Locally**:
-    ```bash
-    # Run with hot-reload (requires air) or standard go run
-    make dev
-    ```
-
-4.  **Configuration**:
-    The server looks for `config/server.yaml`. You can override defaults using environment variables (see below).
-
-## ⚙️ Configuration
-
-The application uses `server.yaml` for base configuration but prioritizes Environment Variables—making it ideal for **Cloud Run** or K8s.
-
-| Setting | Env Variable | Default | Description |
-| :--- | :--- | :--- | :--- |
-| **Port** | `PORT` | `8080` | HTTP listening port. |
-| **Database URL** | `DATABASE_URL` / `PG_URL` | - | Full Postgres connection URL (e.g., `postgres://user:pass@host:5432/db`). |
-| **LLM Token** | `CHUTES_API_TOKEN` | - | API Token for the LLM provider. |
-| **LLM Endpoint** | `CHUTES_API_URL` | - | Base URL for LLM chat completions. |
-| **LLM Model** | `CHUTES_API_MODEL` | - | Model name to use (e.g., `deepseek-r1:8b`). |
-
-### `server.yaml` Example
-See `config/server.yaml` for the complete schema including detailed chunking, embedding, and auth settings.
-
-## ☁️ Deployment (Cloud Run)
-
-This project includes a `Dockerfile` optimized for Cloud Run.
-
-```bash
-# Build (or use GitHub Actions provided in .github/workflows)
-docker build -t rag-server .
-
-# Run
-docker run -p 8080:8080 -e PORT=8080 -e DATABASE_URL="..." rag-server
-```
-
-**Cloud Run Tips**:
-- Map the Cloud SQL instance using the Cloud Run SQL connection.
-- Set `DATABASE_URL` to the socket path or private IP.
-- Mount secrets for API keys.
-
-## 🔌 API Reference
-
-## 📚 Documentation
-
-Detailed documentation is available in the [`docs/`](./docs) directory:
-
-*   [**Getting Started**](./docs/getting-started.md): Installation and local development guide.
-*   [**Configuration**](./docs/configuration.md): Environment variables and `server.yaml` settings.
-*   [**Deployment**](./docs/deployment.md): Docker and Cloud Run deployment instructions.
-*   [**API Reference**](./docs/api-reference.md): details on RAG, Sync, and System endpoints.
-
-## 📜 License
-
-This project is licensed under the MIT License.
+- `AGENTS.md`
+- `IMPLEMENTATION_GUIDE.md`
+- `PATH_VERIFICATION.md`
+- `Runbook/RAG-Server.md`
+- `TOKEN_AUTH_MANUAL.md`
+- `TOKEN_AUTH_SUMMARY.md`
+- `advanced/customization.md`
+- `advanced/performance.md`
+- `advanced/scalability.md`
+- `advanced/security.md`
+- `api/auth.md`
+- `api/endpoints.md`
