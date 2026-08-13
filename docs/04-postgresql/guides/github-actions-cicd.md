@@ -68,7 +68,7 @@ cat ~/.ssh/github_deploy
 
 ## 🚀 使用方法
 
-### 工作流 1: 构建镜像
+### 工作流 1: 构建并发布镜像
 
 **自动触发**:
 - Push 到 `main` 或 `develop` 分支
@@ -77,13 +77,18 @@ cat ~/.ssh/github_deploy
 
 **手动触发**:
 1. 访问 Actions 页面
-2. 选择 "Build and Push PostgreSQL Image"
+2. 选择 "Build And Push GHCR Image PostgreSQL"
 3. 点击 "Run workflow"
 4. 可选: 指定 PostgreSQL 版本
 
 **输出**:
-- 镜像推送到 GitHub Container Registry
-- 镜像地址: `ghcr.io/<owner>/postgresql.svc.plus/postgres-extensions:latest`
+- GitHub Container Registry 发布产物遵循以下约定:
+  - `oci://ghcr.io/ai-workspace-infra/charts/postgresql`
+  - `ghcr.io/ai-workspace-infra/postgresql`
+  - `ghcr.io/ai-workspace-infra/stunnel-client`
+  - `ghcr.io/ai-workspace-infra/stunnel-server`
+
+> 说明: 该工作流本身负责 PostgreSQL 镜像构建；这里列出的是与本仓库 CI/CD 对齐的完整 GHCR 命名风格。
 
 ### 工作流 2: 部署到 VM
 
