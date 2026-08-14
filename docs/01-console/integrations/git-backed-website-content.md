@@ -18,9 +18,10 @@ content/website/
 ```
 
 The default backend is `https://github.com/haitaopanhq/knowledge.git`, under
-`content/website`. Portal copies that directory to `src/content` in its
-isolated build workspace, validates the contract, then generates the typed
-content artifacts consumed by the homepage.
+`content/website`. Portal creates `src/content` only as a disposable
+build-workspace mirror, validates the contract, then generates the typed
+content artifacts consumed by the homepage. No `src/content` source file is
+tracked by Portal.
 
 `knowledge.git` is the canonical content source for the product surface:
 
@@ -50,8 +51,9 @@ yarn build
 
 For a content-only branch, set `WEBSITE_CONTENT_REF` to that branch before
 running the same commands. `content:pull` mirrors the backend directory into
-`src/content`, so uncommitted website copy belongs in the backend repository,
-not the Portal checkout.
+an ignored `src/content` build directory, so all website copy belongs in the
+backend repository, not the Portal checkout. Portal intentionally has no
+command that pushes content back to the backend.
 
 `yarn build` intentionally fails if the content manifest has not been synced.
 This prevents an image from being built with an accidental or stale local

@@ -9,7 +9,7 @@ This repository packages a PostgreSQL-based runtime with operational hardening, 
 - Primary directories detected: `deploy/`, `scripts/`, `tests/`, `example/`, `workflows/`
 - Existing docs count: 57
 
-## Core Bilingual Documentation
+## Canonical pages
 
 - [Architecture](architecture.md)
 - [Design](design.md)
@@ -17,9 +17,8 @@ This repository packages a PostgreSQL-based runtime with operational hardening, 
 - [User Guide](user-guide.md)
 - [Developer Guide](developer-guide.md)
 - [Vibe Coding Reference](vibe-coding-reference.md)
-- [Supabase Architecture Selection & Observability Integration Guide](supabase-architecture-and-observability.md)
 
-## Legacy Documentation fold in
+## Legacy docs to fold in
 
 - `ARCHITECTURE.md`
 - `COMPLETION_REPORT.md`

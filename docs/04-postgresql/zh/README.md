@@ -17,7 +17,6 @@
 - [使用手册](user-guide.md)
 - [开发手册](developer-guide.md)
 - [Vibe Coding 参考](vibe-coding-reference.md)
-- [Supabase 架构选型与 Observability 接入指南](supabase-architecture-and-observability.md)
 
 ## 待归并的历史文档
 
