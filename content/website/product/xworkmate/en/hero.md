@@ -6,6 +6,20 @@ hero:
   cta:
     label: 'Experience Now'
     href: '/panel'
+wizard:
+  title: 'Get Started in 3 Simple Steps'
+  description: 'Quickly integrate large language models, multi-agent frameworks, and data flows into your workflows.'
+  steps:
+    - step: 1
+      title: 'Configure Model Routing'
+      description: 'Unified access to LiteLLM model proxies with instant routing rules.'
+      link: '/panel'
+    - step: 2
+      title: 'Orchestrate Agents'
+      description: 'Assemble specialized agents like OpenClaw and QMD tailored to your scenarios.'
+    - step: 3
+      title: 'Deploy & Monitor Live'
+      description: 'Gain holographic observability over throughput, latency, and context health.'
 showcases:
   - title: 'Smart Agent Matrix'
     description: 'Use advanced multi-agent architecture for task collaboration. Whether it is access to large models or accurate context-based responses, Xworkmate has you covered.'

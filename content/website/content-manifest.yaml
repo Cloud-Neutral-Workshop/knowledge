@@ -14,6 +14,14 @@ spec:
     homepageHero:
       - homepage/zh/hero.md
       - homepage/en/hero.md
+    products:
+      - product/xconnect/{zh,en}/hero.md
+      - product/xworkmate/{zh,en}/hero.md
+      - product/open-platform/{zh,en}/hero.md
+      - product/ai-workspace/{zh,en}/hero.md
+      - product/xcloudflow/{zh,en}/hero.md
+      - product/xscopehub/{zh,en}/hero.md
+      - product/xstream/{zh,en}/hero.md
   consumer:
     repository: portal
     targetPath: src/content
