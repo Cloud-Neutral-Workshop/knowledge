@@ -6,6 +6,20 @@ hero:
   cta:
     label: 'Learn More'
     href: '/panel'
+wizard:
+  title: 'Build Open Infrastructure in 3 Simple Steps'
+  description: 'Quickly deploy a trusted, controllable enterprise platform with Infrastructure as Code (IaC).'
+  steps:
+    - step: 1
+      title: 'Initialize Core Components'
+      description: 'Spin up Gitea, Vault, Zitadel, and APISIX control planes with one click.'
+      link: '/panel'
+    - step: 2
+      title: 'Configure Security & IAM'
+      description: 'Out-of-the-box Zero-Trust authentication and automated certificate rotations.'
+    - step: 3
+      title: 'Declarative Delivery'
+      description: 'Implement versioned environments and automated deployments powered by GitOps.'
 showcases:
   - title: 'Unified Open Control Plane'
     description: 'Integrate open source infrastructure such as Gitea, Vault, Zitadel to provide a one-stop enterprise-level control plane.'
