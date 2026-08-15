@@ -15,13 +15,20 @@ spec:
       - homepage/zh/hero.md
       - homepage/en/hero.md
     products:
-      - product/xconnect/{zh,en}/hero.md
-      - product/xworkmate/{zh,en}/hero.md
-      - product/open-platform/{zh,en}/hero.md
-      - product/ai-workspace/{zh,en}/hero.md
-      - product/xcloudflow/{zh,en}/hero.md
-      - product/xscopehub/{zh,en}/hero.md
-      - product/xstream/{zh,en}/hero.md
+      - product/xconnect/zh/hero.md
+      - product/xconnect/en/hero.md
+      - product/xworkmate/zh/hero.md
+      - product/xworkmate/en/hero.md
+      - product/open-platform/zh/hero.md
+      - product/open-platform/en/hero.md
+      - product/ai-workspace/zh/hero.md
+      - product/ai-workspace/en/hero.md
+      - product/xcloudflow/zh/hero.md
+      - product/xcloudflow/en/hero.md
+      - product/xscopehub/zh/hero.md
+      - product/xscopehub/en/hero.md
+      - product/xstream/zh/hero.md
+      - product/xstream/en/hero.md
   consumer:
     repository: portal
     targetPath: src/content
