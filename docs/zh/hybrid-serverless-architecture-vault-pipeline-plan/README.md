@@ -20,6 +20,24 @@
 - `observability-trace` 单数配置不存在；
 - Grafana Metrics、Logs、Traces 数据源健康；MCP 当前 Codex 展示状态需以客户端 `codex mcp list` 为准。
 
+### 当前参考实现：VPS 各类 SaaS 服务选择概览
+
+下表用于新增 Micro SaaS 的第一轮资源选型。它描述的是“默认放在哪里”和“何时拆分”，不是把每个服务永久固定在某一种平台；最终档位必须根据实际 QPS、并发、数据库连接、磁盘增长和外部 API 延迟复核。
+
+| SaaS 服务类型 | 当前参考服务 | 首选运行位置 | 最小运行资源 | 推荐资源 | 预估承载能力/拆分信号 |
+|---|---|---|---|---|---|
+| 静态 Portal、文档站、营销页 | Portal | Cloudflare Pages + CDN | 无常驻 VPS | Pages + Worker | 适合低成本发布；只有 SSR、长任务或私有网络依赖时回 VPS/Cloud Run |
+| 认证、账户、租户、简单 CRUD | Accounts | 共享控制面 VPS，Cloud Run `min=0` 备用 | 共享 `2C4G` | 独立 `1C1G` 或共享 `4C8G` | 约 10–30 RPS 总 API；持续高峰、连接池或故障隔离要求上升时拆分 |
+| 计量、账单、支付、Webhook | Billing | VPS 主承载 + Cloud Run 弹性副本 | `1C1G`/服务 | `2C2–4G`/服务 | 约 10–30 写请求/秒；出现重试、队列积压、Stripe 延迟或幂等压力时优先独立部署 |
+| 内容、知识库、管理后台 API | Content | VPS；无状态读取可迁 Cloud Run | `0.5C512M` | `1C1–2G` | 约 10–30 RPS；索引构建、文件处理或内存缓存增长时拆分，数据库连接仍走 Pooler |
+| 异步 Worker、定时任务、队列消费者 | 新 Micro SaaS Worker | Cloud Run Jobs/Service 或独立 VPS Worker | `0.5C512M` | `1C1–2G`，按队列扩容 | 以任务耗时、队列积压和并发执行数为准；不与同步 API 争抢连接池 |
+| AI 推理、向量检索、长连接、文件处理 | 知识库/AI 扩展 | 独立 VPS/专用节点 + Cloud Run 辅助 | 独立资源池 | `4C8G+`，按 GPU/IO/带宽压测 | 不建议放进 `console-uat` 控制面；CPU、内存、磁盘或带宽持续超过 60–70% 即拆分 |
+| 代理、Xray、长连接数据面 | Agent-proxy、Xray | 独立代理 VPS | `1–2C2G` | `2–4C4–8G`，SSD `40–200GB` | 主要受带宽、长连接、加密 CPU 和磁盘日志影响；不要与 PostgreSQL/观测平台长期合并 |
+| PostgreSQL/业务状态 | 当前自建 PostgreSQL；目标 Supabase Cloud | Supabase Cloud；迁移期保留 VPS 回滚 | 托管或 VPS `2C4G` | Supabase 按套餐；自建建议 `4C8G+` | 以连接数、IOPS、存储和备份恢复窗口为准；迁移完成前禁止双写 |
+| Metrics、Logs、Traces、Grafana | `observability.svc.plus` | 独立观测 VPS | `2C4G / 150GB SSD` | `4C8G / 300GB SSD` | 约 4–6 个节点、低至中等写入量；按日志/Trace 写入速率和磁盘保留期扩容 |
+
+推荐的默认落地组合是：Portal 走 Pages，Accounts/Billing/Content 共享 `2C4G` 控制面 VPS，Cloud Run 保留 `min=0` 弹性副本；PostgreSQL 使用 Supabase Cloud Pooler；Agent-proxy 与 Observability 使用独立资源池。只有当某一类服务达到拆分信号，才单独升级资源或迁移运行位置。
+
 ### 数据库连接选择
 
 运行时连接和迁移/备份连接必须分离：
