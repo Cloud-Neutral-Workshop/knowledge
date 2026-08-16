@@ -26,6 +26,31 @@
 
 Migration job 应使用独立 Vault Role 和最小数据库权限。migration 失败必须停止发布，不得让服务在半迁移状态下对外提供目标环境流量。
 
+### 数据库连接矩阵：运行时与迁移分离
+
+| 场景 | 推荐连接 | Vault Key | 使用边界 |
+|---|---|---|---|
+| VPS 日常运行 | Session pooler `5432`；IPv4-only 时最稳 | `DATABASE_SESSION_POOLER_URL` | Accounts/Billing 长期运行连接 |
+| Cloud Run 日常运行 | Session pooler；代码兼容事务池化时再用 Transaction pooler `6543` | `DATABASE_SESSION_POOLER_URL` / `DATABASE_TRANSACTION_POOLER_URL` | 默认 Session；Transaction 需关闭或验证 prepared statement/session state 依赖 |
+| schema/DDL/`pg_dump` 迁移 | Direct connection；无 IPv6 时可用 Session pooler | `DATABASE_DIRECT_URL` | 只读 source + 目标写入，单向执行 |
+| 备份恢复 | Direct 优先；IPv4-only 时使用 Session pooler | `DATABASE_DIRECT_URL` / `DATABASE_SESSION_POOLER_URL` | 禁止使用 Transaction pooler |
+
+Canonical Vault 路径：
+
+```text
+kv/data/<env>/serverless/supabase
+├── PROJECT_REF
+├── DATABASE_SESSION_POOLER_URL
+├── DATABASE_TRANSACTION_POOLER_URL  # 可选
+└── DATABASE_DIRECT_URL               # migration/backup 专用
+```
+
+`DATABASE_DIRECT_URL` 不进入普通业务运行时 Secret。部署编排器根据部署档位把
+`DATABASE_SESSION_POOLER_URL` 或经验证的 `DATABASE_TRANSACTION_POOLER_URL` 注入
+Accounts/Billing；migration job 独立读取 `DATABASE_DIRECT_URL`。VPS 和 Cloud Run
+在同一环境必须连接同一个 Supabase 数据库，不能一边读写本地 PostgreSQL、一边读写
+Supabase，也不能在没有一致性方案时双写。
+
 ---
 
 ## 十、Gateway、Portal 与域名合同

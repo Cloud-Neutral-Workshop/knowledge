@@ -277,11 +277,13 @@ kv/data/<env>/hybrid/runtime/edge-gateway
 └── JWT_VERIFY_SECRET
 
 kv/data/<env>/hybrid/runtime/accounts
-├── DATABASE_POOLER_URL
+├── DATABASE_SESSION_POOLER_URL
+├── DATABASE_TRANSACTION_POOLER_URL  # 可选，仅 Cloud Run 且已验证事务池化兼容性时使用
 └── INTERNAL_SERVICE_TOKEN
 
 kv/data/<env>/hybrid/runtime/billing
-├── DATABASE_POOLER_URL
+├── DATABASE_SESSION_POOLER_URL
+├── DATABASE_TRANSACTION_POOLER_URL  # 可选，仅 Cloud Run 且已验证事务池化兼容性时使用
 ├── INTERNAL_SERVICE_TOKEN
 └── STRIPE_WEBHOOK_SECRET
 
@@ -293,13 +295,20 @@ kv/data/<env>/hybrid/runtime/content
 kv/data/<env>/hybrid/runtime/portal
 ├── NEXT_PUBLIC_API_URL
 └── NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+kv/data/<env>/serverless/supabase
+├── PROJECT_REF
+├── DATABASE_SESSION_POOLER_URL
+├── DATABASE_TRANSACTION_POOLER_URL  # 可选
+└── DATABASE_DIRECT_URL               # migration/backup 专用
 ```
 
 以上按服务拆分的路径是 Cloud Run 和多服务隔离场景的最小权限基线。对于当前 `console-uat` 这类“Caddy + Portal + Accounts + Billing + Content + PostgreSQL”同机 All-in-one，可以使用一个聚合运行包：
 
 ```text
 kv/data/<env>/hybrid/runtime/
-├── DATABASE_POOLER_URL
+├── DATABASE_SESSION_POOLER_URL
+├── DATABASE_TRANSACTION_POOLER_URL  # 可选，不作为 All-in-one 默认
 ├── ACCOUNTS_INTERNAL_SERVICE_TOKEN
 ├── BILLING_INTERNAL_SERVICE_TOKEN
 ├── STRIPE_WEBHOOK_SECRET
@@ -313,7 +322,8 @@ kv/data/<env>/hybrid/runtime/
 聚合运行包的规则：
 
 - 可以作为 All-in-one 主机初始化和部署 Job 的统一读取路径；
-- `DATABASE_POOLER_URL` 可以共享，但生产环境仍建议为不同服务使用不同数据库角色；
+- `DATABASE_SESSION_POOLER_URL` 可以作为 All-in-one 默认连接，但生产环境仍建议为不同服务使用不同数据库角色；
+- `DATABASE_TRANSACTION_POOLER_URL` 只作为 Cloud Run 可选档位，不得未经兼容性验证覆盖 Session pooler；
 - `INTERNAL_SERVICE_TOKEN` 不建议在聚合包中使用一个无区分的共享值，优先使用带服务前缀的 Token；
 - `NEXT_PUBLIC_*` 只是前端公开构建配置，不是私密凭据，不能因为放在 Vault 就当作 Secret 保护；
 - `STRIPE_WEBHOOK_SECRET` 和知识库配置必须限制在受信任的部署/控制面范围内；
@@ -382,8 +392,10 @@ Cloud Run 服务的端口、健康检查路径和必须的环境变量必须在�
 
 ### 数据库连接
 
-- 普通服务使用 `DATABASE_POOLER_URL`；
-- migration 使用独立的 `DATABASE_DIRECT_URL`；
+- VPS 日常运行使用 Session pooler `5432`，Vault Key 为 `DATABASE_SESSION_POOLER_URL`；
+- Cloud Run 日常运行默认使用 Session pooler；只有应用明确兼容事务池化时，才使用 `DATABASE_TRANSACTION_POOLER_URL` 的 `6543`；
+- schema/DDL/`pg_dump` migration 使用独立的 `DATABASE_DIRECT_URL`；如果迁移 runner 不支持 IPv6，则回退到 Session pooler；
+- 备份恢复优先使用 Direct，IPv4-only 网络回退到 Session pooler；
 - 连接池必须限制最大连接数，避免 Cloud Run 水平扩展打满 Supabase；
 - 数据库 URL 不得出现在日志、GitHub Step Summary 或错误信息中。
 

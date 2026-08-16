@@ -20,6 +20,31 @@
 - `observability-trace` 单数配置不存在；
 - Grafana Metrics、Logs、Traces 数据源健康；MCP 当前 Codex 展示状态需以客户端 `codex mcp list` 为准。
 
+### 数据库连接选择
+
+运行时连接和迁移/备份连接必须分离：
+
+| 场景 | 推荐连接 | Vault Key |
+|---|---|---|
+| VPS 日常运行 | Session pooler `5432`；IPv4-only 时最稳 | `DATABASE_SESSION_POOLER_URL` |
+| Cloud Run 日常运行 | Session pooler；应用兼容事务池化时再用 Transaction pooler `6543` | `DATABASE_SESSION_POOLER_URL` / `DATABASE_TRANSACTION_POOLER_URL` |
+| schema/DDL/`pg_dump` 迁移 | Direct connection；无 IPv6 时可用 Session pooler | `DATABASE_DIRECT_URL` |
+| 备份恢复 | Direct 优先；IPv4-only 时使用 Session pooler | `DATABASE_DIRECT_URL` / `DATABASE_SESSION_POOLER_URL` |
+
+统一存放在：
+
+```text
+kv/data/<env>/serverless/supabase
+├── PROJECT_REF
+├── DATABASE_SESSION_POOLER_URL
+├── DATABASE_TRANSACTION_POOLER_URL  # 可选
+└── DATABASE_DIRECT_URL               # migration/backup 专用
+```
+
+`DATABASE_DIRECT_URL` 不得注入普通业务运行时；运行时只读取按场景选择的 Pooler URL。
+Transaction pooler 仅适用于已验证 prepared statement、session state 和连接池行为的
+无状态服务；当前 Accounts/Billing 默认使用 Session pooler。
+
 ## 兼容入口
 
 原始单文件版本仍保留在上级目录，作为历史引用和全文对照：
