@@ -3,6 +3,7 @@
 > **技术矩阵**：Cloudflare Pages + Cloudflare Workers (SSR ×5 + Gateway ×3) + GCP Cloud Run (Scale-to-0) + Supabase Cloud DB (`xworktech`) + HashiCorp Vault (`vault.svc.plus`)  
 > **核心声明源**：`gitops/topology/uat/serverless/runtime-topology.yaml`  
 > **标准编排流水线**：`platform-ops-toolkit/.github/workflows/serverless-orchestrator.yml` ([CI Run #32017012356](https://github.com/ai-workspace-infra/platform-ops-toolkit/actions/runs/32017012356))
+> **目标演进**：将当前 9 个边缘边界升级为“Frontend Router ×1 + Pages ×1 + SSR ×5 + API Gateway ×3”；具体决策和编码计划见 [Console Frontend Router 与 Edge Gateway 目标架构及实施计划](frontend-edge-routing-target-architecture.md)。
 
 ---
 
