@@ -23,6 +23,27 @@ description: 将 console.svc.plus 的静态资源、SSR 页面与 API 边界收�
 
 这会把当前由 `Pages Custom Domain + 多个重叠 Worker route` 隐式完成的前端分发，收敛为一个明确、可测试的入口。`frontend-ssr-public` 当前的 `/*` 不再承担路由优先级兜底。
 
+### 域名与绑定关系 TL;DR
+
+| 对象 | 是否用户可见 | 公网绑定 | 绑定方式 | 说明 |
+| --- | --- | --- | --- | --- |
+| `frontend-router` | 是 | `console.svc.plus` | Worker Custom Domain | Console 的唯一入口；按路径向 Pages、SSR 或 API Gateway 分发 |
+| Cloudflare Pages | 否 | 无 Console Custom Domain | `PAGES_ORIGIN` | 仅作为静态构建产物 origin，例如 `https://ai-workspace-portal-prod.pages.dev` |
+| `edge-gateway-core` | 是 | `accounts.svc.plus` | Worker Custom Domain | Accounts API host 的兜底入口 |
+| `edge-gateway-auth` | 是（经 Accounts host） | `accounts.svc.plus/api/auth/*`、`/api/v1/auth/*` | Worker Route | 由更具体的 route 覆盖 core host 兜底 |
+| `edge-gateway-admin` | 是（经 Accounts host） | `accounts.svc.plus/api/admin/*` | Worker Route | 管理 API 专属边界 |
+| 五个 SSR Worker | 否 | 无 | `frontend-router` Service Binding | 不能暴露独立公网入口 |
+| Cloud Run | 否 | 无 | Gateway upstream URL | 仅作为 Accounts、Content、Billing 的计算上游 |
+
+DNS 只维护两个用户可见入口：
+
+```text
+console.svc.plus  -> frontend-router Worker Custom Domain
+accounts.svc.plus -> edge-gateway-core Worker Custom Domain
+```
+
+`console.svc.plus` 不能同时作为 Pages 和 `frontend-router` 的 Custom Domain。目标状态中 Router 拥有该域名，Pages 退为内部静态 origin；`/api/*` 由 Router 反向代理到 Accounts host，而不是向浏览器发送跨域重定向。
+
 ## 2. 目标流量拓扑
 
 ```mermaid
@@ -125,21 +146,23 @@ GitOps 是名称、域名、路径、Service Binding 和上游的唯一声明源
 ```yaml
 spec:
   serverless:
+    console_host: console.svc.plus
+    accounts_host: accounts.svc.plus
     frontend_router:
-      worker_name: frontend-router-uat
-      host: console-cloudflare-uat.onwalk.net
-      pages_origin: https://ai-workspace-portal-uat.pages.dev
-      api_origin: https://accounts-cloudflare-uat.onwalk.net
+      worker_name: frontend-router-prod
+      host: console.svc.plus
+      pages_origin: https://ai-workspace-portal-prod.pages.dev
+      api_origin: https://accounts.svc.plus
       static_prefixes: [/_next/*, /static/*, /assets/*]
       bindings:
-        auth: frontend-ssr-auth-uat
-        content: frontend-ssr-content-uat
-        console: frontend-ssr-console-uat
-        workspace: frontend-ssr-workspace-uat
-        public: frontend-ssr-public-uat
+        auth: frontend-ssr-auth-prod
+        content: frontend-ssr-content-prod
+        console: frontend-ssr-console-prod
+        workspace: frontend-ssr-workspace-prod
+        public: frontend-ssr-public-prod
 ```
 
-现有 SSR route suffixes 将逐步从 Cloudflare 的公网 Worker routes 移到 Router 内部的匹配表；避免 `/*` 和更具体 path 同时绑定在同一个 Console host。迁移期间不可同时让 Pages 和 `frontend-router` 争夺同一 Custom Domain。
+生产、UAT 和 SIT 的 hostname、Worker suffix、Pages origin 由各自 topology 渲染，结构保持一致。现有 SSR route suffixes 将逐步从 Cloudflare 的公网 Worker routes 移到 Router 内部的匹配表；避免 `/*` 和更具体 path 同时绑定在同一个 Console host。迁移期间不可同时让 Pages 和 `frontend-router` 争夺同一 Custom Domain。
 
 ## 6. 分阶段编码计划
 
