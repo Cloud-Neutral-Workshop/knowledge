@@ -27,7 +27,7 @@ description: 将 console.svc.plus 的静态资源、SSR 页面与 API 边界收�
 
 | 对象 | 是否用户可见 | 公网绑定 | 绑定方式 | 说明 |
 | --- | --- | --- | --- | --- |
-| `frontend-router` | 是 | `console.svc.plus` | Worker Custom Domain | Console 的唯一入口；按路径向 Pages、SSR 或 API Gateway 分发 |
+| `frontend-router` | 是 | `console.svc.plus`（canonical） | DNS CNAME → 环境专属 Worker Custom Domain | Console 的唯一入口；按路径向 Pages、SSR 或 API Gateway 分发 |
 | Cloudflare Pages | 否 | 无 Console Custom Domain | `PAGES_ORIGIN` | 仅作为静态构建产物 origin，例如 `https://ai-workspace-portal-prod.pages.dev` |
 | `edge-gateway-core` | 是 | `accounts.svc.plus` | Worker Custom Domain | Accounts API host 的兜底入口 |
 | `edge-gateway-auth` | 是（经 Accounts host） | `accounts.svc.plus/api/auth/*`、`/api/v1/auth/*` | Worker Route | 由更具体的 route 覆盖 core host 兜底 |
@@ -38,11 +38,15 @@ description: 将 console.svc.plus 的静态资源、SSR 页面与 API 边界收�
 DNS 只维护两个用户可见入口：
 
 ```text
-console.svc.plus  -> frontend-router Worker Custom Domain
-accounts.svc.plus -> edge-gateway-core Worker Custom Domain
+console.svc.plus  -> console-cloudflare-prod.svc.plus  -> frontend-router-prod
+accounts.svc.plus -> accounts-cloudflare-prod.svc.plus -> edge-gateway-core-prod
 ```
 
-`console.svc.plus` 不能同时作为 Pages 和 `frontend-router` 的 Custom Domain。目标状态中 Router 拥有该域名，Pages 退为内部静态 origin；`/api/*` 由 Router 反向代理到 Accounts host，而不是向浏览器发送跨域重定向。
+上例是 PROD。SIT/UAT 使用同一结构和各自的 `*-cloudflare-<env>.*` target。前两者是唯一的
+canonical 用户入口；中间的 Cloudflare target 仅是 DNS 切流和 Worker Custom Domain 落点，不是第三类
+业务域名。
+
+`console-cloudflare-prod.svc.plus` 不能同时作为 Pages 和 `frontend-router` 的 Custom Domain。目标状态中 Router 拥有该 Cloudflare target，Pages 退为内部静态 origin；`/api/*` 由 Router 反向代理到 Accounts host，而不是向浏览器发送跨域重定向。
 
 ## 2. 目标流量拓扑
 
