@@ -29,7 +29,7 @@ description: 将 console.svc.plus 的静态资源、SSR 页面与 API 边界收�
 | --- | --- | --- | --- | --- |
 | `frontend-router` | 是 | `console.svc.plus`（canonical） | DNS CNAME → 环境专属 Worker Custom Domain | Console 的唯一入口；按路径向 Pages、SSR 或 API Gateway 分发 |
 | Cloudflare Pages | 否 | 无 Console Custom Domain | `PAGES_ORIGIN` | 仅作为静态构建产物 origin，例如 `https://ai-workspace-portal-prod.pages.dev` |
-| `edge-gateway-core` | 是 | `accounts.svc.plus` | Worker Custom Domain | Accounts API host 的兜底入口 |
+| Edge Gateway Router Core<br>`edge-gateway-core` | 是 | `accounts.svc.plus` | Worker Custom Domain | Accounts API host 的唯一入口 owner，及未被更具体路径截获的 `/api/*` fallback |
 | `edge-gateway-auth` | 是（经 Accounts host） | `accounts.svc.plus/api/auth/*`、`/api/v1/auth/*` | Worker Route | 由更具体的 route 覆盖 core host 兜底 |
 | `edge-gateway-admin` | 是（经 Accounts host） | `accounts.svc.plus/api/admin/*` | Worker Route | 管理 API 专属边界 |
 | 五个 SSR Worker | 否 | 无 | `frontend-router` Service Binding | 不能暴露独立公网入口 |
@@ -75,7 +75,7 @@ flowchart TD
     GCore --> CloudRun
 ```
 
-`frontend-router` 代理 API 时必须访问 `accounts` 的公开网关入口，而不是直接调用 `GW-core`。这样 `/api/auth/*`、`/api/admin/*` 的 Cloudflare 路由优先级仍由 `edge-gateway` 的单一契约决定，避免前端路由器复制 API 边界判断。
+`frontend-router` 代理 API 时必须访问 `accounts` 的公开网关入口，而不是直接调用 Edge Gateway Router Core。这样 `/api/auth/*`、`/api/admin/*` 的 Cloudflare 路由优先级仍由 `edge-gateway` 的单一契约决定，避免前端路由器复制 API 边界判断。
 
 ## 3. 前端路由契约
 
@@ -123,7 +123,7 @@ Console 同源 API 代理会使浏览器把响应视为来自 `console.svc.plus`
 | --- | --- | --- | --- |
 | `GW-auth` | `/api/auth/*`、`/api/v1/auth/*` | Accounts Cloud Run | GitOps route 必须覆盖代码已支持的 v1 路径，或同步删除遗留 v1 支持 |
 | `GW-admin` | `/api/admin/*` | Accounts Cloud Run | 明确管理员 JWT/RBAC 失败响应与审计 header |
-| `GW-core` | 其余 `/api/*` | Accounts、Content、Billing Cloud Run | 用显式 service-route matrix 取代“未匹配即 Accounts”的隐式默认 |
+| Edge Gateway Router Core（`GW-core`） | 其余 `/api/*`，并拥有 Accounts Custom Domain | Accounts、Content、Billing Cloud Run | 用显式 service-route matrix 取代“未匹配即 Accounts”的隐式默认 |
 
 建议的 GitOps 服务分类形态如下。具体业务 path 只能在核对各服务 OpenAPI/路由后填入，不能凭名称猜测：
 
@@ -228,12 +228,12 @@ spec:
 | `/`、`/about`、`/products/*` | 200；命中 `SSR-public` |
 | `/api/auth/login` | Console Router 同源代理 → Accounts host → `GW-auth` → Accounts Cloud Run |
 | `/api/admin/*` | Console Router 同源代理 → `GW-admin`；未授权为可审计的 401/403 |
-| Content/Billing API | `GW-core` 带正确服务路由和 `X-Upstream-Route` 到对应 Cloud Run |
+| Content/Billing API | Edge Gateway Router Core 带正确服务路由和 `X-Upstream-Route` 到对应 Cloud Run |
 | Cookie 往返 | 登录、刷新、退出在 Console host 和 Accounts host 的预期范围内一致 |
 
 ## 8. 非目标
 
 - 不把 Cloud Run 的业务逻辑、Supabase 凭据或数据库访问放进任一 Router。
-- 不按 Accounts/Content/Billing 各自新增 Gateway Worker；服务分类属于 `GW-core`。
+- 不按 Accounts/Content/Billing 各自新增 Gateway Worker；服务分类属于 Edge Gateway Router Core。
 - 不让 GitHub Actions `operation` 输入承担 Router path 或环境拓扑定义。
 - 不在切换前删除 Pages、SSR 或现有 Gateway；所有迁移均需要可验证的 UAT 灰度与回滚路径。
