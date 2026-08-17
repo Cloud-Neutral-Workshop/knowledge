@@ -34,6 +34,7 @@ description: 将 console.svc.plus 的静态资源、SSR 页面与 API 边界收�
 | `edge-gateway-admin` | 是（经 Accounts host） | `accounts.svc.plus/api/admin/*` | Worker Route | 管理 API 专属边界 |
 | 五个 SSR Worker | 否 | 无 | `frontend-router` Service Binding | 不能暴露独立公网入口 |
 | Cloud Run | 否 | 无 | Gateway upstream URL | 仅作为 Accounts、Content、Billing 的计算上游 |
+| Supabase DB URI | 否 | 无 | 仅由 Cloud Run 运行时通过 Vault 注入 | 不是 Gateway upstream，绝不出现在 Worker、DNS 或浏览器配置中 |
 
 DNS 只维护两个用户可见入口：
 
@@ -47,6 +48,8 @@ canonical 用户入口；中间的 Cloudflare target 仅是 DNS 切流和 Worker
 业务域名。
 
 `console-cloudflare-prod.svc.plus` 不能同时作为 Pages 和 `frontend-router` 的 Custom Domain。目标状态中 Router 拥有该 Cloudflare target，Pages 退为内部静态 origin；`/api/*` 由 Router 反向代理到 Accounts host，而不是向浏览器发送跨域重定向。
+
+上游的层次必须固定为：`Edge Gateway upstream URL → Cloud Run service URL → Supabase DB URI`。Gateway 只能调用 HTTPS 服务端点；Cloud Run 才在运行时从 Vault 获取数据库连接信息并访问 Supabase。
 
 ## 2. 目标流量拓扑
 
