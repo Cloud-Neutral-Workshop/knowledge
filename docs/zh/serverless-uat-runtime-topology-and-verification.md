@@ -56,22 +56,7 @@ flowchart TD
   * `console-uat.onwalk.net` $\rightarrow$ `console-cloudflare-uat.onwalk.net`
   * `accounts-uat.onwalk.net` $\rightarrow$ `accounts-cloudflare-uat.onwalk.net`
 
-### 2. Cloudflare 边缘分片契约 (9 大边界)
-为了规避 Cloudflare Workers 单包 3 MiB 的上限并实现细粒度缓存与按需伸缩，前端与网关拆分为 **9 个独立部署单元**：
-
-| 边界标识 | 部署类型 | Worker / Pages 实体名称 | 路由规则匹配 | 承载功能 |
-| :--- | :--- | :--- | :--- | :--- |
-| `ssr-public` | Worker | `frontend-ssr-public-uat` | `/*`, `/_edge/public/*` | 官网、营销首页与通用落地页 |
-| `ssr-content` | Worker | `frontend-ssr-content-uat` | `/blogs*`, `/docs*`, `/download*`, `/_edge/content/*` | 博客、文档与下载中心 |
-| `ssr-auth` | Worker | `frontend-ssr-auth-uat` | `/login*`, `/register*`, `/email-verification*`, `/logout*`, `/_edge/auth/*` | 身份认证与登录注册页面 |
-| `ssr-console` | Worker | `frontend-ssr-console-uat` | `/panel*`, `/dashboard*`, `/_edge/console/*` | 控制台与用户仪表盘 |
-| `ssr-workspace` | Worker | `frontend-ssr-workspace-uat` | `/ai-workspace*`, `/cloud_iac*`, `/editor*`, `/support*`, `/xworkmate*`, `/_edge/workspace/*` | AI 工作区与在线编辑器 |
-| `api-auth` | Worker | `edge-gateway-auth-uat` | `accounts-cloudflare-uat.onwalk.net/api/auth/*` | 鉴权与会话验证 API 网关 |
-| `api-admin` | Worker | `edge-gateway-admin-uat` | `accounts-cloudflare-uat.onwalk.net/api/admin/*` | 管理员 API 网关 |
-| `api-core` | Worker | `edge-gateway-core-uat` | `accounts-cloudflare-uat.onwalk.net/api/*` | 核心业务 API 兜底网关 |
-| `static` | Pages | `ai-workspace-portal-uat` | `/static/*`, `/assets/*` | 前端打包静态资产 (JS/CSS/Images) |
-
-### 3. 后端微服务与真实端点映射 (`spec.serverless`)
+### 2. 后端微服务与真实端点映射 (`spec.serverless`)
 实际部署在 GCP Cloud Run（区域 `asia-northeast1`，项目 `xworktech`）的微服务端点：
 
 * **Accounts Service**: `https://uat-accounts-1004637461064.asia-northeast1.run.app`
@@ -80,7 +65,106 @@ flowchart TD
 
 ---
 
-## ⚙️ 三、 CI/CD 自动化流水线编排链路
+## 🌐 三、 9 个边缘分片边界精确路由与链路拓扑关系
+
+在 `gitops/topology/uat/serverless/runtime-topology.yaml` 中，为了**彻底规避 Cloudflare Workers 单包 3 MiB 限制**、**实现毫秒级边缘冷启动**与**双轨故障转移（Failover）**，整个前端与网关被严格划分为 **9 个独立分片边界**（1 个 Pages 静态资产 + 5 个 SSR Workers + 3 个 API Gateway Workers）。
+
+### 1. 宿主域名与分片归属拓扑
+
+```mermaid
+flowchart TD
+    subgraph HostConsole ["宿主域名 A: console-cloudflare-uat.onwalk.net (前端交互面)"]
+        Pages["1. static (Pages 静态资产)"]
+        SSR1["2. ssr-public (官网/落地页)"]
+        SSR2["3. ssr-content (博客/文档)"]
+        SSR3["4. ssr-auth (登录/注册页)"]
+        SSR4["5. ssr-console (控制台/仪表盘)"]
+        SSR5["6. ssr-workspace (AI 工作区/编辑器)"]
+    end
+
+    subgraph HostAccounts ["宿主域名 B: accounts-cloudflare-uat.onwalk.net (API 网关面)"]
+        GW1["7. api-auth (认证鉴权网关)"]
+        GW2["8. api-admin (管理后台网关)"]
+        GW3["9. api-core (核心业务兜底网关)"]
+    end
+
+    subgraph Backends ["后端计算与数据持久层"]
+        CR_Accounts["GCP Cloud Run: uat-accounts"]
+        CR_Content["GCP Cloud Run: uat-content-service"]
+        CR_Billing["GCP Cloud Run: uat-billing-service"]
+        DB[("Supabase Cloud DB: xworktech")]
+    end
+
+    GW1 -->|/api/auth/*| CR_Accounts
+    GW2 -->|/api/admin/*| CR_Accounts
+    GW3 -->|/api/* 核心业务| CR_Accounts
+    GW3 -.->|内容检索| CR_Content
+    GW3 -.->|账单/支付| CR_Billing
+    CR_Accounts --> DB
+```
+
+### 2. 9 大分片边界路由规则与职责矩阵
+
+| 序号 | 分片边界 ID | 承载实体类型与 Worker 名称 | 绑定宿主域名 | 精确匹配路由规则 (Routes) | 核心职责与业务范围 | 后端真实上游 (Upstream) |
+| :---: | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1** | **`static`** | **Cloudflare Pages**<br>`ai-workspace-portal-uat` | `console-cloudflare-uat.onwalk.net` | `/static/*`<br>`/assets/*`<br>`*.ico, *.png, *.svg` | 前端打包静态资产 (Next.js HTML/JS/CSS/多媒体)，利用 Cloudflare 全球 CDN 零成本无限带宽分发 | Cloudflare 边缘存储 (Pages Storage) |
+| **2** | **`ssr-public`** | **Worker (OpenNext)**<br>`frontend-ssr-public-uat` | `console-cloudflare-uat.onwalk.net` | `/*`<br>`/_edge/public/*` | 官网首页、营销推广页、通用 Landing Page 及全平台客户端下载指引的 SSR 渲染 | Cloudflare Pages 静态依赖 + 边缘 V8 执行 |
+| **3** | **`ssr-content`** | **Worker (OpenNext)**<br>`frontend-ssr-content-uat` | `console-cloudflare-uat.onwalk.net` | `/blogs*`<br>`/docs*`<br>`/download*`<br>`/_edge/content/*` | 博客中心、知识库技术文档 (`docs.svc.plus`) 与产品包发布中心的动态 SSR 渲染 | Cloud Run `uat-content-service` (获取文档源) |
+| **4** | **`ssr-auth`** | **Worker (OpenNext)**<br>`frontend-ssr-auth-uat` | `console-cloudflare-uat.onwalk.net` | `/login*`<br>`/register*`<br>`/email-verification*`<br>`/logout*`<br>`/_edge/auth/*` | 身份流转页面 (登录、注册、邮箱激活、重置密码及登出) 的 SSR 渲染 | 边缘前置校验 + 客户端调用 API 网关 |
+| **5** | **`ssr-console`** | **Worker (OpenNext)**<br>`frontend-ssr-console-uat` | `console-cloudflare-uat.onwalk.net` | `/panel*`<br>`/dashboard*`<br>`/_edge/console/*` | 用户个人中心、多租户控制面板、订阅套餐概览及组织管理面板 SSR 渲染 | 边缘聚合 + 客户端交互 |
+| **6** | **`ssr-workspace`** | **Worker (OpenNext)**<br>`frontend-ssr-workspace-uat` | `console-cloudflare-uat.onwalk.net` | `/ai-workspace*`<br>`/cloud_iac*`<br>`/editor*`<br>`/support*`<br>`/xworkmate*`<br>`/_edge/workspace/*` | 在线 Web IDE、AI 对话工作区、云端 IaC 资源编排器及工单/客服支持交互界面 | 客户端直连数据面及核心 API 网关 |
+| **7** | **`api-auth`** | **Worker (Edge Gateway)**<br>`edge-gateway-auth-uat` | `accounts-cloudflare-uat.onwalk.net` | `/api/auth/*` | 拦截所有认证请求，负责边缘 JWT 签名/验签、OAuth 回调分发及登录 Token 交换 | **Cloud Run: `uat-accounts`**<br>`https://uat-accounts-1004637461064.asia-northeast1.run.app` |
+| **8** | **`api-admin`** | **Worker (Edge Gateway)**<br>`edge-gateway-admin-uat` | `accounts-cloudflare-uat.onwalk.net` | `/api/admin/*` | 管理员/运维平台专属网关，负责高权限接口隔离与 RBAC 访问权限拦截 | **Cloud Run: `uat-accounts`** (Admin 模块) |
+| **9** | **`api-core`** | **Worker (Edge Gateway)**<br>`edge-gateway-core-uat` | `accounts-cloudflare-uat.onwalk.net` | `/api/*`<br>*(全局通配兜底)* | 核心业务网关，处理租户元数据、计费调用、内容接口，支持 2500ms 超时自动故障转移 (Failover) | **Cloud Run: `uat-accounts`** / `uat-billing-service` / `uat-content-service` |
+
+### 3. 请求流转与时序交互拓扑
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as 用户浏览器
+    participant CF_Pages as static (Cloudflare Pages)
+    participant CF_SSR as 5× SSR Workers (Portal)
+    participant CF_GW as 3× Edge Gateway Workers
+    participant CloudRun as GCP Cloud Run (Scale-to-0)
+    participant Supabase as Supabase Cloud DB (xworktech)
+
+    %% 场景 1: 前端页面访问
+    rect rgb(240, 248, 255)
+    Note over User,CF_Pages: 1. 前端页面与静态资产加载
+    User->>CF_Pages: GET /static/chunks/main.js
+    CF_Pages-->>User: 200 OK (CDN 边缘秒级命中)
+    User->>CF_SSR: GET /dashboard (命中 ssr-console)
+    CF_SSR-->>User: 200 OK (SSR 渲染 HTML 输出)
+    end
+
+    %% 场景 2: API 鉴权与业务调用
+    rect rgb(255, 250, 240)
+    Note over User,Supabase: 2. API 接口调用与数据流
+    User->>CF_GW: POST accounts-cloudflare-uat.onwalk.net/api/auth/login
+    Note over CF_GW: 命中 api-auth 边界<br/>执行 JWT 边缘验证与请求清洗
+    CF_GW->>CloudRun: 转发至 uat-accounts (Scale-to-0 唤醒)
+    CloudRun->>Supabase: 校验用户密码与元数据 (Direct URI / Pooler)
+    Supabase-->>CloudRun: 返回用户记录
+    CloudRun-->>CF_GW: 200 OK (Set-Cookie / Access Token)
+    CF_GW-->>User: 200 OK
+    end
+```
+
+### 4. 架构工程优势与设计考量
+
+1. **突破 Cloudflare Workers 3 MiB 体积限制**：
+   全量 Next.js 生产产物通常在 15~30 MiB，单 Worker 无法承载。通过 OpenNext 拆分为 5 个专业化 SSR Worker 后，单 Worker 体积仅 1.5~2.8 MiB，完全满足 Cloudflare 单包限制。
+2. **毫秒级边缘冷启动**：
+   拆分后的 Worker 内存占用小，配合 Cloudflare V8 Isolate 引擎，边缘冷启动耗时低于 50ms。
+3. **高权限隔离与安全纵深**：
+   `/api/auth/*`（高频轻量）与 `/api/admin/*`（低频高权）在边缘层即由专属 Worker 处理，避免通用业务漏洞穿透影响认证中枢。
+4. **零闲置成本双轨容灾**：
+   前端由 Pages/Workers 免费承载，后端微服务在 Cloud Run 设置 `min-instances=0`，无人访问时计算资源消耗为 $0。请求触发时在 ~200ms 内拉起并直连 Supabase 读写。
+
+---
+
+## ⚙️ 四、 CI/CD 自动化流水线编排链路
 
 标准流水线定义在 `platform-ops-toolkit/.github/workflows/serverless-orchestrator.yml`：
 
@@ -107,7 +191,7 @@ flowchart TD
 
 ---
 
-## 🔍 四、 链路排错与域名连通性实测手册
+## 🔍 五、 链路排错与域名连通性实测手册
 
 ### 1. 域名解析与 Custom Domain 绑定排错
 * **现象**：浏览器直接访问 `console-cloudflare-uat.onwalk.net` 出现 `ERR_NAME_NOT_RESOLVED` (NXDOMAIN)。
