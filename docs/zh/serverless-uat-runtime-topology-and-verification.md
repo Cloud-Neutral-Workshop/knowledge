@@ -192,27 +192,42 @@ sequenceDiagram
 
 ---
 
-## 🔍 五、 链路排错与域名连通性实测手册
+## 🔍 五、 链路排错与全链路实测验证手册
 
 ### 1. 域名解析与 Custom Domain 绑定排错
 * **现象**：浏览器直接访问 `console-cloudflare-uat.onwalk.net` 出现 `ERR_NAME_NOT_RESOLVED` (NXDOMAIN)。
 * **根因**：Cloudflare DNS Zone `onwalk.net` 尚未绑定 Custom Domain 或缺少 CNAME 记录。
 * **解决办法**：
-  * **Console 接入**：在 Cloudflare Pages `ai-workspace-portal-uat` $\rightarrow$ **Custom domains** 添加 `console-cloudflare-uat.onwalk.net`（或在 DNS 添加 CNAME 指向 `ai-workspace-portal-uat.pages.dev` 并开启 Proxied 橙色小云朵）。
+  * **Console 接入**：在 Cloudflare Pages `ai-workspace-portal-uat` $\rightarrow$ **Custom domains** 添加 `console-cloudflare-uat.onwalk.net`（或在 DNS 添加 CNAME 指向 `ai-workspace-portal-uat.pages.dev` 并开启 Proxied 橙色小云朵）；若启用 Frontend Router 则将该 Custom Domain 挂载至 `frontend-router-uat` Worker。
   * **Accounts 接入**：在 Worker `edge-gateway-core-uat` $\rightarrow$ **Custom domains** 添加 `accounts-cloudflare-uat.onwalk.net`。
+  * **Billing 接入**：在 Cloudflare DNS 或 Edge Gateway 路由表中添加 `billing-cloudflare-uat.onwalk.net` 映射至 `uat-billing-service`。
 
-### 2. 真实端点快速连通性验证命令
+### 2. 6 步全链路端到端实测验证命令
+
 ```bash
-# 1. 验证 Cloudflare Pages 静态站与 SSR 入口
-curl -sSL -I https://ai-workspace-portal-uat.pages.dev/
+# 1. 验证 Cloudflare DNS 解析 (Canonical CNAME 目标)
+dig +short console-uat.onwalk.net
+dig +short accounts-uat.onwalk.net
+dig +short billing-uat.onwalk.net
 
-# 2. 验证 Cloud Run Accounts 容器与应用响应
+# 2. 验证前端 Router 与 Pages 静态资源分发
+curl -sSL -I https://console-cloudflare-uat.onwalk.net/
+curl -sSL -I https://console-cloudflare-uat.onwalk.net/static/
+
+# 3. 验证 SSR 动态页面分片渲染 (控制台/登录/文档)
+curl -sSL -I https://console-cloudflare-uat.onwalk.net/panel
+curl -sSL -I https://console-cloudflare-uat.onwalk.net/login
+curl -sSL -I https://console-cloudflare-uat.onwalk.net/blogs
+
+# 4. 验证经由 Frontend Router 同源代理到 Accounts 网关及 Cloud Run 的链路
+curl -sSL -I https://console-cloudflare-uat.onwalk.net/api/auth/login
+
+# 5. 验证 Cloud Run Accounts 后端容器及直连 Supabase 的连通性
 curl -sSL -I https://uat-accounts-1004637461064.asia-northeast1.run.app/readyz
 
-# 3. 验证 Cloud Run Content 与 Billing 服务响应
-curl -sSL -I https://uat-content-service-1004637461064.asia-northeast1.run.app/
+# 6. 验证 Cloud Run Billing 账单服务与 Content 内容服务连通性
 curl -sSL -I https://uat-billing-service-1004637461064.asia-northeast1.run.app/
-
-# 4. 验证 Supabase 心跳保活 (通过 Vault API 提取凭据或 REST ping)
-curl -sSL -H "apikey: <SUPABASE_ANON_KEY>" "https://<PROJECT_REF>.supabase.co/rest/v1/"
+curl -sSL -I https://uat-content-service-1004637461064.asia-northeast1.run.app/
+curl -sSL -I https://billing-cloudflare-uat.onwalk.net/
 ```
+

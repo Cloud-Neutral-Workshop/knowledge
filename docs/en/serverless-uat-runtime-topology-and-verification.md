@@ -191,27 +191,42 @@ The orchestration pipeline is implemented in `platform-ops-toolkit/.github/workf
 
 ---
 
-## 🔍 5. Troubleshooting & Connectivity Verification
+## 🔍 5. Troubleshooting & End-to-End Verification Manual
 
 ### 1. DNS Resolution & Custom Domain Binding
 * **Issue**: Browser navigation to `console-cloudflare-uat.onwalk.net` returns `ERR_NAME_NOT_RESOLVED` (NXDOMAIN).
 * **Root Cause**: Cloudflare DNS Zone `onwalk.net` lacks the custom domain binding or CNAME record.
 * **Resolution**:
-  * **Console Access**: In Cloudflare Pages `ai-workspace-portal-uat` $\rightarrow$ **Custom domains**, add `console-cloudflare-uat.onwalk.net` (or add a CNAME pointing to `ai-workspace-portal-uat.pages.dev` with Proxied enabled).
+  * **Console Access**: In Cloudflare Pages `ai-workspace-portal-uat` $\rightarrow$ **Custom domains**, add `console-cloudflare-uat.onwalk.net` (or add a CNAME pointing to `ai-workspace-portal-uat.pages.dev` with Proxied enabled); if using Frontend Router, bind the custom domain directly to `frontend-router-uat` Worker.
   * **Accounts Gateway**: In Worker `edge-gateway-core-uat` $\rightarrow$ **Custom domains**, add `accounts-cloudflare-uat.onwalk.net`.
+  * **Billing Gateway**: In Cloudflare DNS or Edge Gateway service routing, map `billing-cloudflare-uat.onwalk.net` to `uat-billing-service`.
 
-### 2. Live Verification Commands
+### 2. 6-Step End-to-End Live Verification Commands
+
 ```bash
-# 1. Verify Cloudflare Pages portal
-curl -sSL -I https://ai-workspace-portal-uat.pages.dev/
+# 1. Verify Cloudflare DNS resolution (Canonical CNAME targets)
+dig +short console-uat.onwalk.net
+dig +short accounts-uat.onwalk.net
+dig +short billing-uat.onwalk.net
 
-# 2. Verify Cloud Run Accounts container readiness
+# 2. Verify Frontend Router and Pages static asset distribution
+curl -sSL -I https://console-cloudflare-uat.onwalk.net/
+curl -sSL -I https://console-cloudflare-uat.onwalk.net/static/
+
+# 3. Verify SSR dynamic split page rendering (Dashboard/Login/Blogs)
+curl -sSL -I https://console-cloudflare-uat.onwalk.net/panel
+curl -sSL -I https://console-cloudflare-uat.onwalk.net/login
+curl -sSL -I https://console-cloudflare-uat.onwalk.net/blogs
+
+# 4. Verify same-origin proxy from Frontend Router to Accounts Gateway & Cloud Run
+curl -sSL -I https://console-cloudflare-uat.onwalk.net/api/auth/login
+
+# 5. Verify Cloud Run Accounts container readiness & Supabase DB connectivity
 curl -sSL -I https://uat-accounts-1004637461064.asia-northeast1.run.app/readyz
 
-# 3. Verify Cloud Run Content and Billing microservices
-curl -sSL -I https://uat-content-service-1004637461064.asia-northeast1.run.app/
+# 6. Verify Cloud Run Billing and Content microservice endpoints
 curl -sSL -I https://uat-billing-service-1004637461064.asia-northeast1.run.app/
-
-# 4. Supabase Keepalive Ping
-curl -sSL -H "apikey: <SUPABASE_ANON_KEY>" "https://<PROJECT_REF>.supabase.co/rest/v1/"
+curl -sSL -I https://uat-content-service-1004637461064.asia-northeast1.run.app/
+curl -sSL -I https://billing-cloudflare-uat.onwalk.net/
 ```
+
