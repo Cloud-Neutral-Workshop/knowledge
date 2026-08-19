@@ -1,0 +1,88 @@
+name: Publish Content Release
+
+# The content service rebuilds its snapshot from this repository on a timer
+# (DOCS_RELOAD_INTERVAL, 5 minutes by default) and the portal caches what it
+# reads for a comparable window. Polling is the floor, not the contract: this
+# workflow pushes a content release the moment it lands on main, so an edit is
+# live in seconds instead of waiting out both windows.
+#
+# Required repository secrets, one entry per environment in CONTENT_TARGETS:
+#   CONTENT_SERVICE_TARGETS   newline-separated `<name> <base-url>` pairs
+#   CONTENT_SERVICE_TOKEN     value for the X-Service-Token header
+# The workflow is a no-op when they are unset, so a fork or a new checkout does
+# not fail on push.
+#
+# This reloads the content service only. The statically published sections
+# (blogs, docs, products) are rebuilt by the environment's Pages deployment,
+# because that deployment also carries the SSR boundaries' client chunks, which
+# are keyed to the commit the boundaries were built from. Republishing content
+# on its own needs those sections to live in their own Pages project — the
+# frontend-router already reads a separate origin per section for exactly that.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'content/**'
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: Why the release is being pushed by hand
+        required: false
+        default: manual
+
+concurrency:
+  group: publish-content-release
+  cancel-in-progress: false
+
+jobs:
+  reload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Push a content release to every content service
+        env:
+          CONTENT_SERVICE_TARGETS: ${{ secrets.CONTENT_SERVICE_TARGETS }}
+          CONTENT_SERVICE_TOKEN: ${{ secrets.CONTENT_SERVICE_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${CONTENT_SERVICE_TARGETS:-}" || -z "${CONTENT_SERVICE_TOKEN:-}" ]]; then
+            echo "CONTENT_SERVICE_TARGETS / CONTENT_SERVICE_TOKEN are not configured; skipping." \
+              | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          failed=0
+          echo "## Content release" >> "$GITHUB_STEP_SUMMARY"
+          while read -r name base_url; do
+            [[ -z "${name:-}" || "${name}" == \#* ]] && continue
+            if [[ -z "${base_url:-}" ]]; then
+              echo "- ❌ ${name}: no base URL in CONTENT_SERVICE_TARGETS" >> "$GITHUB_STEP_SUMMARY"
+              failed=1
+              continue
+            fi
+
+            echo "==> reloading ${name} (${base_url})"
+            # The service answers 502 when the git pull or the index build failed,
+            # and keeps serving the previous snapshot, so a non-200 is a release
+            # that did not land rather than an outage.
+            status=$(curl --silent --show-error --max-time 120 \
+              --output /tmp/reload-response.json --write-out '%{http_code}' \
+              --request POST "${base_url%/}/api/v1/admin/reload?pull=true" \
+              --header "X-Service-Token: ${CONTENT_SERVICE_TOKEN}" \
+              --header 'Content-Length: 0' || echo 000)
+
+            if [[ "${status}" != "200" ]]; then
+              message=$(jq -r '.message // "no message"' /tmp/reload-response.json 2>/dev/null || echo "no response")
+              echo "- ❌ ${name}: HTTP ${status} — ${message}" >> "$GITHUB_STEP_SUMMARY"
+              failed=1
+              continue
+            fi
+
+            hash=$(curl --silent --max-time 30 "${base_url%/}/healthz" | jq -r '.contentHash // "unknown"')
+            echo "- ✅ ${name}: contentHash \`${hash}\`" >> "$GITHUB_STEP_SUMMARY"
+          done <<< "${CONTENT_SERVICE_TARGETS}"
+
+          exit "${failed}"
