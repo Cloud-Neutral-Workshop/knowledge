@@ -60,6 +60,34 @@ By strategically chaining modern free tiers with edge routing, we can establish 
 - **Stateful Core (Supabase Cloud PostgreSQL)**: Managed PostgreSQL 15+ backed by Supavisor connection pooling for burst capacity.
 - **Hybrid Ingress Dispatcher (Gateway Failover)**: Dynamically steers traffic between low-cost primary VPS nodes and cloud serverless fallbacks.
 
+### 1.4 Architectural Archetypes Comparison
+
+```
+┌─────────────────────────┬─────────────────────────┬─────────────────────────┐
+│      Self-Host VPS      │     Pure Serverless     │ Hybrid Edge & Free SaaS │
+├─────────────────────────┼─────────────────────────┼─────────────────────────┤
+│ 1. Ingress Layer        │ 1. Ingress Layer        │ 1. Edge Ingress & Route │
+│    - Direct IP / Nginx  │    - API Gateway costs  │    - Cloudflare Edge    │
+│    - No Global CDN      │      per-request        │      absorbs 90% traffic│
+│    - Volumetric risk    │    - Scraper cost risks │    - 5 Edge SSR Workers │
+├─────────────────────────┼─────────────────────────┼─────────────────────────┤
+│ 2. Compute Layer        │ 2. Compute Layer        │ 2. Elastic & Failover   │
+│    - Monolith on 1 VPS  │    - Fragmented FaaS    │    - GCP Cloud Run      │
+│    - Single point (SPOF)│    - Cold start latency │      Scale-to-Zero      │
+│                         │    - High concurrency $ │    - Primary-to-Cloud   │
+│                         │                         │      failover routing   │
+├─────────────────────────┼─────────────────────────┼─────────────────────────┤
+│ 3. Database Layer       │ 3. Database Layer       │ 3. Managed DB & Pooling │
+│    - Local Postgres disk│    - Direct connections │    - Supabase Postgres  │
+│    - Manual maintenance │      exhaust pool limits│    - Supavisor txn pool │
+├─────────────────────────┼─────────────────────────┼─────────────────────────┤
+│ 💡 BEST FOR             │ 💡 BEST FOR             │ 💡 BEST FOR             │
+│    - Fixed $5 budget dev│    - Event-driven burst │    - $0–$5/mo bootstrap │
+│    - Toy / Internal POC │    - Enterprise budgets │    - Global low-latency │
+│    - Single-region apps │    - Zero-ops preference│    - Indie Hackers SaaS │
+└─────────────────────────┴─────────────────────────┴─────────────────────────┘
+```
+
 ---
 
 ## 2. System Topology & Cloud-Native Asset Catalog
