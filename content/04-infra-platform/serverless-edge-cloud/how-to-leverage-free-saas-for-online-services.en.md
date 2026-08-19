@@ -180,13 +180,13 @@ Consider an online SaaS processing **10,000,000 requests/month (10M requests)**:
    - Consumes ~26,000 invocations/day (well within the 100,000/day free limit).
    - **Cost: $0.00** (or $5.00/mo if upgrading to Workers Paid for uncapped CPU).
 3. **200,000 requests (2%)** reach core API microservices (authentication, mutations, billing):
-   - Handled by **GCP Cloud Run** (consuming only 10% of the 2M free quota).
-   - **Cost: $0.00**.
+   - Handled by **GCP Cloud Run** (consuming only 10% of the 2M free invocation quota; compute vCPU-sec and GiB-sec remain well within free thresholds).
+   - **Cost: Effectively ~$0.00** (To be technically rigorous, minor peripheral items like cross-region outbound egress beyond 1GB, Artifact Registry image storage, or Secret Manager API calls may incur trivial marginal costs, typically **$0.10 to $1.00/mo**).
 4. **Database Workload**:
    - 200,000 queries pooled through Supavisor maintain 10–20 active Postgres connections with $<100\text{MB}$ memory consumption.
    - **Cost: $0.00**.
 
-**Total Monthly Operational Cost**: **$0.00 to $5.00 USD**, supporting tens of thousands of Monthly Active Users (MAU).
+**Total Monthly Operational Cost**: **$0.00 to $5.00 USD** (even accounting for minor outbound egress and optional Worker Paid features), effortlessly supporting tens of thousands of Monthly Active Users (MAU).
 
 ---
 
