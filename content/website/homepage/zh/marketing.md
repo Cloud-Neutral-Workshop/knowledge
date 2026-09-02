@@ -44,19 +44,19 @@ nav:
   enterConsole: 进入控制台
   logout: 退出登录
 hero:
-  eyebrow: XWorkmate · AI Workspace
+  eyebrow: XWORKMATE / AI WORKSPACE
   logoLabel: AI 模型与智能体
   title:
     - 开放的 AI 工作空间
-  line: 告别 AI 工具碎片化，一个 Workspace 连接你的所有 AI。
+  line: 连接模型、Agent、工具与数据，让每个想法走向结果。
   subtitle: 不用在 ChatGPT、Claude、Gemini、Agent、插件和各种工具之间反复切换。XWorkmate 将 AI 模型、智能助手、工具和数据连接到一个统一工作空间，让你从想法到成果，在一个地方完成。
   tagline: One AI Workspace for all your AI.
   trialNote: ""
   primaryCta:
-    label: 免费试用
+    label: 开始免费试用
     href: /ai-workspace?entry=trial
   secondaryCta:
-    label: 查看产品演示
+    label: 查看工作空间
     href: "#product-demo"
   visual:
     eyebrow: 一个空间，所有 AI

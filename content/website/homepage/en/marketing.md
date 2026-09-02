@@ -44,11 +44,11 @@ nav:
   enterConsole: Enter Console
   logout: Sign out
 hero:
-  eyebrow: XWorkmate · AI Workspace
+  eyebrow: XWORKMATE / AI WORKSPACE
   logoLabel: AI models & agents
   title:
     - An open AI workspace
-  line: Say goodbye to fragmented AI tools. One Workspace connects all your AI.
+  line: Connect models, agents, tools, and data so every idea can move to an outcome.
   subtitle: Stop switching between ChatGPT, Claude, Gemini, agents, plugins, and other tools. XWorkmate brings AI models, assistants, tools, and data into one unified workspace, so you can go from idea to outcome in one place.
   tagline: One AI Workspace for all your AI.
   trialNote: ""
@@ -56,7 +56,7 @@ hero:
     label: Try it free
     href: /ai-workspace?entry=trial
   secondaryCta:
-    label: See the product demo
+    label: Explore workspace
     href: "#product-demo"
   visual:
     eyebrow: ONE SPACE, EVERY AI
