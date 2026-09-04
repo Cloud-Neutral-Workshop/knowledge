@@ -8,7 +8,7 @@ hero:
     href: '/panel'
 wizard:
   title: '3 步开启智能工作空间'
-  description: '快速进入智能工作台，连接模型、工具与工作流。'
+  description: '快速进入智能工作空间，连接模型、工具与工作流。'
   steps:
     - step: 1
       title: '创建工作区'
@@ -22,7 +22,7 @@ wizard:
       description: '在工作空间内协同完成代码开发、知识整理与自动化交付。'
 showcases:
   - title: '对话即工作'
-    description: '由 XWorkmate 驱动，把对话、任务和工具整合在同一个工作台里，持续产出可交付的结果，而不是停留在聊天记录中。'
+    description: '由 XWorkmate 驱动，把对话、任务和工具整合在同一个工作空间里，持续产出可交付的结果，而不是停留在聊天记录中。'
     icon: 'bot'
     image: '/marketing/xworkmate/已生成图像 2.png'
   - title: '无缝连接一切'

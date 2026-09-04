@@ -4,7 +4,7 @@ hero:
   title: 'Xstream Platform'
   subtitle: '涵盖 Caddy、Xray 隧道观测代理与同步节点，构建安全高效的私有 AI 加速网络。'
   cta:
-    label: '立即体验'
+    label: '进入控制台'
     href: '/panel'
 showcases:
   - title: '私有加速网络'
