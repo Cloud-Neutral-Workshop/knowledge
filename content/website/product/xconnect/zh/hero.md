@@ -29,7 +29,7 @@ showcases:
     icon: 'zap'
     image: '/marketing/xconnect/product.png'
   - title: '私有环境与本地 Workspace 穿透'
-  - description: '安全穿越复杂网络环境，将本地代码仓库、内网数据库与专有算力无缝接入云端 AI 工作台。'
+  - description: '安全穿越复杂网络环境，将本地代码仓库、内网数据库与专有算力无缝接入云端 AI 工作空间。'
     icon: 'shield-check'
     image: '/marketing/xconnect/panel.png'
     reverse: true

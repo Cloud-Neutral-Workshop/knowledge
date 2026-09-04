@@ -4,7 +4,7 @@ hero:
   title: 'Xworkmate'
   subtitle: '涵盖 App LiteLLM、OpenClaw、QMD 等智能代理与模型路由调度，赋予应用真正的 AI 原生能力。'
   cta:
-    label: '立即体验'
+    label: '进入控制台'
     href: '/panel'
 wizard:
   title: '3 步接入 AI 智能工作流'

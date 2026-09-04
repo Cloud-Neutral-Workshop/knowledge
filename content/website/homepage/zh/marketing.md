@@ -13,7 +13,7 @@ nav:
           description: AI Connectivity · 为 AI Workspace 提供稳定、安全的连接能力
           href: /products/xconnect
         - label: AI Workspace
-          description: 立即进入你的智能工作台，开始对话、任务与交付
+          description: 立即进入你的智能工作空间，开始对话、任务与交付
           href: /products/ai-workspace
         - label: Open Platform
           description: 开源、可控、可扩展的基础设施支撑，支持自建部署
@@ -165,10 +165,10 @@ controls:
 proof:
   eyebrow: 产品事实与证明
   title: 先看见真实工作流，再决定如何开始
-  description: 通过工作台预览、从任务到交付的路径和可直接访问的产品入口，了解 XWorkmate 如何推进真实工作。
+  description: 通过工作空间预览、从任务到交付的路径和可直接访问的产品入口，了解 XWorkmate 如何推进真实工作。
   facts:
     - value: 产品预览
-      label: 在 Web、Desktop、Mobile 中查看真实工作台界面
+      label: 在 Web、Desktop、Mobile 中查看真实工作空间界面
     - value: 工作闭环
       label: 从任务、连接到交付，始终保留同一份上下文
     - value: 开放连接
@@ -306,7 +306,7 @@ finalCta:
   title: 先跑通一个真实任务
   description: 创建工作空间，连接已有模型和工具，产出第一份可下载结果。
   primaryCta:
-    label: 免费试用进入工作台
+    label: 免费试用
     href: /ai-workspace?entry=trial
   secondaryCta:
     label: 联系团队部署
